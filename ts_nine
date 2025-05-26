@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+import re
+import sys
+import os
+from datetime import datetime
+
+def filter_timestamps(input_file):
+    # Validate file existence
+    if not os.path.isfile(input_file):
+        print(f"Error: File '{input_file}' not found.")
+        return
+
+    # Create output file name with current date and time
+    timestamp_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    output_file = f'{timestamp_str}.txt'
+
+    # Regex pattern for timestamps like 12:34-56:78
+    timestamp_pattern = re.compile(r'\b\d{2}:\d{2}-\d{2}:\d{2}\b')
+
+    with open(input_file, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+
+    # Remove empty or whitespace-only lines
+    lines = [line for line in lines if line.strip()]
+
+    # Separate lines with and without timestamps
+    timestamp_lines = []
+    other_lines = []
+
+    for line in lines:
+        if timestamp_pattern.search(line):
+            timestamp_lines.append(line)
+        else:
+            other_lines.append(line)
+
+    # Keep every 4th timestamp line (1-based: 4th, 8th, etc.)
+    retained_timestamp_lines = [
+        line for i, line in enumerate(timestamp_lines) if (i + 1) % 9 == 0
+    ]
+
+    # Add double newline before each retained timestamp line
+    retained_timestamp_lines = ['\n\n' + line for line in retained_timestamp_lines]
+
+    # Combine and preserve original order
+    final_lines = other_lines + retained_timestamp_lines
+    final_lines_sorted = [
+        line for line in lines
+        if line in other_lines or line in timestamp_lines and ('\n\n' + line) in retained_timestamp_lines
+    ]
+
+    # Replace the retained timestamp lines with their double-newline versions
+    for i, line in enumerate(final_lines_sorted):
+        if line in retained_timestamp_lines:
+            continue
+        for ts_line in retained_timestamp_lines:
+            if ts_line.strip() == line.strip():
+                final_lines_sorted[i] = ts_line
+                break
+
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.writelines(final_lines_sorted)
+
+    print(f"Filtered output saved to: {output_file}")
+
+# Run from command line
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: filterts <input_file.txt>")
+    else:
+        filter_timestamps(sys.argv[1])
