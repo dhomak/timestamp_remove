@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+
+import os
+import re
+import sys
+from datetime import datetime
+
+
+def filter_timestamps(input_file: str) -> None:
+    """
+    Filters timestamp patterns from the input text file, retains every fourth match,
+    and writes the result to a timestamped output file.
+    """
+    if not os.path.isfile(input_file):
+        print(f"Error: File not found: {input_file}")
+        return
+
+    output_filename = datetime.now().strftime('%Y-%m-%d_%H-%M') + '.txt'
+    timestamp_pattern = re.compile(r'\b\d{2}:\d{2}-\d{2}:\d{2}\b')
+
+    try:
+        with open(input_file, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+    except Exception as e:
+        print(f"Error reading file: {e}")
+        return
+
+    # Remove empty lines
+    lines = [line for line in lines if line.strip()]
+
+    # Separate timestamp and non-timestamp lines
+    timestamp_lines = [line for line in lines if timestamp_pattern.search(line)]
+    other_lines = [line for line in lines if not timestamp_pattern.search(line)]
+
+    # Retain every tenth timestamp line, with double newlines
+    retained = [
+        '\n\n' + line for i, line in enumerate(timestamp_lines) if (i + 1) % 10 == 0
+    ]
+
+    final_lines = []
+    for line in lines:
+        if line in other_lines:
+            final_lines.append(line)
+        elif line in timestamp_lines:
+            formatted_line = '\n\n' + line
+            if formatted_line in retained:
+                final_lines.append(formatted_line)
+
+    try:
+        with open(output_filename, 'w', encoding='utf-8') as f:
+            f.writelines(final_lines)
+        print(f"✅ Filtered file saved as: {output_filename}")
+    except Exception as e:
+        print(f"Error writing output file: {e}")
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python3 filter_timestamps.py <input_file.txt>")
+        return
+
+    input_path = sys.argv[1]
+    filter_timestamps(input_path)
+
+
+if __name__ == "__main__":
+    main()
+
