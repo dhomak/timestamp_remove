@@ -35,7 +35,7 @@ def filter_timestamps(input_file):
 
     # Keep every 4th timestamp line (1-based: 4th, 8th, etc.)
     retained_timestamp_lines = [
-        line for i, line in enumerate(timestamp_lines) if (i + 1) % 4 == 0
+        line for i, line in enumerate(timestamp_lines) if (i + 1) % 9 == 0
     ]
 
     # Add double newline before each retained timestamp line
